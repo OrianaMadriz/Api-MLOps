@@ -7,66 +7,62 @@ app = FastAPI()
 # Cargar el dataset
 data = pd.read_csv('data_funciones.csv')
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+@app.get("/peliculas_mes/{mes}")
+def peliculas_mes(mes: str):
+    # nos quedamos solo con un dataframe con las peliculas de ese mes
+    df_mes = data[data['mes'].str.lower() == mes.lower()]
+    
+    # obtenemos la cantidad de películas estrenadas ese mes
+    cantidad_peliculas = len(df_mes)
+    
+    # devolvemos un diccionario con el nombre del mes y la cantidad de películas estrenadas ese mes
+    return {'Mes': mes.capitalize(), 'Cantidad': cantidad_peliculas}
 
-
-@app.get("/peliculas_mes/{month}")
-def peliculas_mes(month: str):
-    # Nos quedamos solo con un dataframe con las peliculas de ese mes
-    df_month = data[data['release_month'].str.lower() == month.lower()]
+@app.get("/peliculas_dia/{dia}")
+def peliculas_dia(dia: str):
+    # nos quedamos solo con un dataframe con las peliculas de ese dia
+    df_dia = data[data['dia'].str.lower() == dia.lower()]
     
-    # Obtenemos la cantidad de películas estrenadas ese mes
-    cantidad_peliculas = len(df_month)
+    # obtenemos la cantidad de películas estrenadas ese dia
+    cantidad_peliculas = len(df_dia)
     
-    # Devolvemos un diccionario con el nombre del mes y la cantidad de películas estrenadas ese mes
-    return {'month': month.capitalize(), 'amount': cantidad_peliculas}
-
-@app.get("/peliculas_dia/{day}")
-def peliculas_dia(day: str):
-    # Nos quedamos solo con un dataframe con las peliculas de ese día
-    df_day = data[data['release_day'].str.lower() == day.lower()]
-    
-    # Obtenemos la cantidad de películas estrenadas ese día
-    cantidad_peliculas = len(df_day)
-    
-    # Devolvemos un diccionario con el nombre del día y la cantidad de películas estrenadas ese día
-    return {'day': day.capitalize(), 'amount': cantidad_peliculas}
+    # devolvemos un diccionario con el nombre del dia y la cantidad de películas estrenadas ese dia
+    return {'Dia': dia.capitalize(), 'Cantidad': cantidad_peliculas}
 
 @app.get("/franquicia/{franquicia}")
 def franquicia(franquicia: str):
-    # Nos quedamos solo con un dataframe con las peliculas de esa colección proporcionada
-    df_collection = data[data['collection_name'] == franquicia]
+      # nos quedamos solo con un dataframe con las peliculas de esa colección proporcionada
+    df_franquicia = data[data['collection_name'] == franquicia]
 
-    # Obtenemos la cantidad de películas en la colección
-    cantidad_peliculas = len(df_collection)
-
-    # Calculamos el promedio y el total de la ganancia para las películas de la colección
-    mean_revenue = df_collection['revenue'].mean()
-    total_revenue = df_collection['revenue'].sum()
-
-    # Devolvemos un diccionario con la información
+    # obtenemos la cantidad de películas estrenadas ese dia
+    cantidad_peliculas = len(df_franquicia)
+    
+    # calculamos el promedio y el total de la ganancia para las películas de la colección
+    ganancia_promedio = df_franquicia['revenue'].mean()
+    ganancia_total = df_franquicia['revenue'].sum()
+    
+    # devolvemos un diccionario con la información
     return {
-        'collection_name': franquicia,
-        'movies_amount': cantidad_peliculas,
-        'total_revenue': total_revenue,
-        'mean_revenue': mean_revenue
+            'Franquicia': franquicia,
+            'Cantidad':cantidad_peliculas,
+            'Ganancia_total': ganancia_total,
+            'Ganancia_promedio': ganancia_promedio
+        
     }
 
 @app.get("/peliculas_pais/{pais}")
 def peliculas_pais(pais: str):
-    # Nos quedamos solo con un dataframe con las peliculas de ese país proporcionado
+   # nos quedamos solo con un dataframe con las peliculas de ese pais proporcionado
     columnas_pais = [f'pco_name_{i}' for i in range(25)]
-    df_country = data[data[columnas_pais].eq(pais).any(axis=1)]    
+    df_pais = data[data[columnas_pais].eq(pais).any(axis=1)]    
     
-    # Obtenemos la cantidad de películas producidas en el país
-    movies_amount = df_country.shape[0]
+    # obtenemos la cantidad de películas producidas en el país
+    cantidad = df_pais.shape[0]
     
-    # Devolvemos un diccionario con la información
+    # devolvemos un diccionario con la información
     return {
-        'country': pais,
-        'movies_amount': movies_amount
+        'Pais': pais,
+        'Cantidad': cantidad
     }
 
 @app.get("/productoras/{productora}")
@@ -76,16 +72,16 @@ def productoras(productora: str):
     df_pc = data[data[columnas_productoras].eq(productora).any(axis=1)]
 
     # calculamos la ganancia total de las películas de la productora
-    total_revenue = df_pc['revenue'].sum()
+    ganancia_total = df_pc['revenue'].sum()
 
     # contamos la cantidad de películas asociadas a la productora
-    movies_amount = df_pc.shape[0]
+    cantidad = df_pc.shape[0]
 
     # devolvemos un diccionario con la información
     return {
-        'production_companies': productora,
-        'total_revenue': total_revenue,
-        'movies_amount': movies_amount
+        'Productora': productora,
+        'Ganancia_total': ganancia_total,
+        'Cantidad': cantidad
     }
 
 # Convertir columnas numéricas a tipos de datos apropiados
@@ -94,45 +90,32 @@ data['revenue'] = pd.to_numeric(data['revenue'], errors='coerce')
 data['return'] = pd.to_numeric(data['return'], errors='coerce')
 data['release_year'] = pd.to_numeric(data['release_year'], errors='coerce')
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-# Convertir columnas numéricas a tipos de datos apropiados
-data['budget'] = pd.to_numeric(data['budget'], errors='coerce')
-data['revenue'] = pd.to_numeric(data['revenue'], errors='coerce')
-data['return'] = pd.to_numeric(data['return'], errors='coerce')
-data['release_year'] = pd.to_numeric(data['release_year'], errors='coerce')
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
 @app.get("/retorno/{pelicula}")
 def retorno(pelicula: str):
-    # Eliminar filas duplicadas basadas en la columna 'title'
-    data_unique = data.drop_duplicates(subset='title')
+   # Eliminar filas duplicadas basadas en la columna 'title'
+    data_unica = data.drop_duplicates(subset='title')
 
     # Nos quedamos solo con un dataframe con los datos de esa película proporcionada
-    movie_data = data_unique[data_unique['title'] == pelicula]
+    data_pelicula = data_unica[data_unica['title'] == pelicula]
 
     # Verificar si se encontró la película
-    if len(movie_data) == 0:
+    if len(data_pelicula) == 0:
         return {'error': 'Película no encontrada'}
 
     # Obtener los valores de las columnas de interés
-    budget = movie_data['budget'].iloc[0].item()
-    revenue = movie_data['revenue'].iloc[0].item()
-    retur = movie_data['return'].iloc[0].item()
-    release_year = movie_data['release_year'].iloc[0].item()
+    inversion = data_pelicula['budget'].iloc[0].item()
+    ganancia = data_pelicula['revenue'].iloc[0].item()
+    retorno = data_pelicula['return'].iloc[0].item()
+    anio = data_pelicula['release_year'].iloc[0].item()
 
     # Devolver un diccionario con la información
     informacion_pelicula = {
-        'pelicula': pelicula,
-        'inversion': budget,
-        'ganancia': revenue,
-        'retorno': retur,
-        'año': release_year
+        'Pelicula': pelicula,
+        'Inversion': inversion,
+        'Ganancia': ganancia,
+        'Retorno': retorno,
+        'Anio': anio
     }
 
     return informacion_pelicula
