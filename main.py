@@ -123,9 +123,9 @@ def retorno(pelicula: str):
     return informacion_pelicula
 
 # Cargar el dataset
-data = pd.read_csv('data_con_EDA.csv')
+df = pd.read_csv('data_con_EDA.csv')
 
-@app.get("/retorno/{pelicula}")
+@app.get("/recomendacion/{pelicula}")
 def recomendacion(titulo: str):
     # Obtener la película de entrada
     pelicula_entrada = df[df['title'] == titulo]
