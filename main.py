@@ -125,32 +125,59 @@ def retorno(pelicula: str):
 # Cargar el dataset
 df = pd.read_csv('data_con_EDA.csv')
 
+columnas_deseadas = ['genres',"title"]
+df = df[columnas_deseadas]
+df.drop_duplicates(subset=["title"], keep='first', inplace=True)
+df.reset_index(drop=True, inplace=True)
+
 @app.get("/recomendacion/{titulo}")
 def recomendacion(titulo: str):
-    df = pd.read_csv('data_con_EDA.csv')
-    columnas_deseadas = ['genres', 'title']
-    df = df[columnas_deseadas].drop_duplicates(subset=["title"], keep='first').reset_index(drop=True)
-    df['title'] = df['title'].astype(str)
+    
+    # Crear una instancia de TfidfVectorizer para los géneros
+    tfidf_genres = TfidfVectorizer(tokenizer=lambda x: eval(x), lowercase=False)
 
-    pelicula_entrada = df[df['title'].str.contains(titulo, case=False)]
+    # Crear la matriz de características para los géneros
+    matriz_caracteristicas_genres = tfidf_genres.fit_transform(df['genres'].apply(str))
 
-    # Obtener los géneros de la película de entrada
-    generos_entrada = eval(pelicula_entrada['genres'].iloc[0])
+    # Encontrar el índice de la película de entrada en el DataFrame actualizado
+    indice_genres = df[df['title'].str.contains(titulo, case=False)].index[0]
 
-    # Filtrar el DataFrame para obtener las películas con géneros exactamente iguales
-    df_recomendadas_genres = df[df['genres'].apply(eval).apply(set) == set(generos_entrada)]
+    # Calcular la similitud del coseno entre los géneros
+    similitud_genres = cosine_similarity(matriz_caracteristicas_genres[indice_genres], matriz_caracteristicas_genres)
 
-    # Excluir el título de entrada del DataFrame
-    df_recomendadas_genres = df_recomendadas_genres[df_recomendadas_genres['title'] != titulo]
+    # Obtener los índices de las películas más similares basadas en los géneros
+    indices_similares_genres = similitud_genres.argsort()[0][:][::-1]
 
-    # Obtener las películas con similitud igual a 1 en términos de géneros
-    df_recomendadas_genres = df_recomendadas_genres[df_recomendadas_genres['genres'].apply(eval).apply(set) == set(generos_entrada)]
+    # Obtener las películas recomendadas basadas en los géneros
+    peliculas_recomendadas_genres = df.loc[indices_similares_genres]
+
+    # Crear una columna de similitud basada en los géneros
+    peliculas_recomendadas_genres['similitud_genres'] = similitud_genres[0, indices_similares_genres]
+
+    # Ordenar el DataFrame por similitud basada en los géneros de manera descendente
+    df_recomendadas_genres = peliculas_recomendadas_genres.sort_values('similitud_genres', ascending=False)
 
     # Reiniciar los índices del DataFrame resultante
     df_recomendadas_genres.reset_index(drop=True, inplace=True)
 
-    # Agregar la fila del título al final del DataFrame
-    df_recomendadas_genres.loc[len(df_recomendadas_genres)] = pelicula_entrada.iloc[0]
+    # Excluir el valor de los géneros de la película de entrada del DataFrame
+    df_recomendadas_genres = df_recomendadas_genres[df_recomendadas_genres['title'] != titulo]
+
+    # Filtrar las películas con similitud de géneros mayor a cero
+    df_recomendadas_genres = df_recomendadas_genres[df_recomendadas_genres['similitud_genres'] > 0]
+
+    # Obtener las primeras 5 películas recomendadas sin repeticiones
+    df_recomendadas_genres = df_recomendadas_genres.drop_duplicates(subset=['title'])
+
+    # Agregar la fila correspondiente al título proporcionado al final del DataFrame
+    fila_titulo_proporcionado = df[df['title'] == titulo]
+    df_recomendadas_genres = pd.concat([df_recomendadas_genres, fila_titulo_proporcionado])
+
+    # Reiniciar los índices del DataFrame resultante
+    df_recomendadas_genres.reset_index(drop=True, inplace=True)
+
+    # Obtener las primeras 5 películas recomendadas sin repeticiones
+    df_recomendadas_genres = df_recomendadas_genres
 
     # Crear una matriz de características utilizando TF-IDF Vectorizer para 'title'
     tfidf_title = TfidfVectorizer(stop_words='english')
@@ -163,7 +190,7 @@ def recomendacion(titulo: str):
     similitud_title = cosine_similarity(matriz_caracteristicas_title[indice_title], matriz_caracteristicas_title)
 
     # Obtener los índices de las películas más similares basadas en los títulos
-    indices_similares_title = similitud_title.argsort()[0][-26:][::-1]
+    indices_similares_title = similitud_title.argsort()[0][:][::-1]
 
     # Obtener las películas recomendadas basadas en los títulos
     peliculas_recomendadas_title = df_recomendadas_genres.loc[indices_similares_title]
@@ -180,13 +207,13 @@ def recomendacion(titulo: str):
     # Excluir el valor del título proporcionado del DataFrame
     df_recomendadas_title = df_recomendadas_title[df_recomendadas_title['title'] != titulo]
 
-    # Obtener las primeras 5 películas recomendadas
-    df_recomendadas_title = df_recomendadas_title.head(5)
+    # Obtener las primeras 5 películas recomendadas sin repeticiones
+    df_recomendadas_title = df_recomendadas_title.drop_duplicates(subset=['title'])
 
     # Obtener una lista de los títulos recomendados
     lista_recomendados = df_recomendadas_title['title'].tolist()
 
     # Crear el diccionario de salida
-    recomendaciones = {'lista recomendada': lista_recomendados}
+    recomendaciones = {'lista recomendada': lista_recomendados[:5]}
 
     return recomendaciones
