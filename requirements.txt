@@ -2,4 +2,4 @@
 uvicorn
 pandas
 typing
-sklearn
+scikit-learn
