@@ -174,23 +174,11 @@ def recomendacion(titulo: str):
     # Ordenar el DataFrame por similitud basada en los títulos de manera descendente
     df_recomendadas_title = peliculas_recomendadas_title.sort_values('similitud_title', ascending=False)
 
-  
-
-
     # Reiniciar los índices del DataFrame resultante
     df_recomendadas_title.reset_index(drop=True, inplace=True)
 
     # Excluir el valor del título proporcionado del DataFrame
     df_recomendadas_title = df_recomendadas_title[df_recomendadas_title['title'] != titulo]
-
-    # Agregar la fila del título al final del dataframe
-    df_recomendadas_title.loc[len(df_recomendadas_title)] = df_recomendadas_genres.iloc[indice_title]
-
-    # Eliminar la columna 'similitud_title'
-    df_recomendadas_title = df_recomendadas_title.drop('similitud_title', axis=1)
-
-    # Restablecer los índices del DataFrame resultante
-    df_recomendadas_title.reset_index(drop=True, inplace=True)
 
     # Obtener las primeras 5 películas recomendadas
     df_recomendadas_title = df_recomendadas_title.head(5)
