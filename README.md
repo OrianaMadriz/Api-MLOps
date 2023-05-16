@@ -194,7 +194,7 @@ https://api-peliculas-tfyb.onrender.com/recomendacion/Batman
 
 
 #
-Se ha creado un video para demostrar el funcionamiento de las consultas propuestas en la API y para mostrar los resultados obtenidos con el modelo de machine learning de recomendacion. El video permite al equipo comprender de manera clara y concisa cómo se utilizan las herramientas y los logros alcanzados en el proyecto.
+Se ha creado un video (https://drive.google.com/drive/folders/1VHV8HH37hd34l-9Ks3kd0k89kX6jlcwd) para demostrar el funcionamiento de las consultas propuestas en la API y para mostrar los resultados obtenidos con el modelo de machine learning de recomendacion. El video permite al equipo comprender de manera clara y concisa cómo se utilizan las herramientas y los logros alcanzados en el proyecto. 
 
 ### Fuente de datos
 
